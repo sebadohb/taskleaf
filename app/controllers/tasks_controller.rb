@@ -1,16 +1,24 @@
 class TasksController < ApplicationController
+  before_action :baria_user, only: [:show, :edit, :update, :destroy ]
   before_action :set_params, only: [:show, :edit, :update, :destroy ]
+  
+  
   def index
-    @tasks = Task.all
+    @tasks = current_user.tasks.recent
   end
 
   def new
     @task = Task.new
   end
   def create
-    task = Task.new(task_params)
-    task.save!
-    redirect_to root_path, notice: "タスク「#{@task.name}」を登録しました。"
+    @task = current_user.tasks.new(task_params)
+    
+    if @task.save
+      redirect_to @task, notice: "タスク「#{@task.name}」を登録しました。"
+    else
+      render :new
+    end
+
   end
 
   def show
@@ -34,6 +42,11 @@ class TasksController < ApplicationController
     params.require(:task).permit(:name, :description)
   end
   def set_params
-    @task = Task.find(params[:id])
+    @task = current_user.tasks.find(params[:id])
+  end
+  def baria_user
+    unless Task.find(params[:id]).user_id == current_user.id
+        redirect_to tasks_url
+    end
   end
 end
